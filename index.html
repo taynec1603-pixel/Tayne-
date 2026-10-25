@@ -672,12 +672,13 @@ function pool() {
   return DATA[kind].filter(t => t.rating > 7 && (g === "Any" || t.genres.includes(g)) && (d === "Any" || t.year >= Number(d)));
 }
 
-// Every year from the newest title back to the oldest, for this type
+// Start years in steps of 10, from the newest decade back to the oldest, for this type
 function fillDecades() {
   const prev = decadeSel.value || load("tmg-from") || "Any";
   const years = DATA[kind].filter(t => t.rating > 7).map(t => t.year);
   const opts = [["Any", "Any year"]];
-  for (let y = Math.max(...years); y >= Math.min(...years); y--) opts.push([String(y), `${y} onwards`]);
+  const top = Math.floor(Math.max(...years) / 10) * 10, bottom = Math.floor(Math.min(...years) / 10) * 10;
+  for (let y = top; y >= bottom; y -= 10) opts.push([String(y), `${y} onwards`]);
   decadeSel.innerHTML = "";
   opts.forEach(([v, label]) => { const o = document.createElement("option"); o.value = v; o.textContent = label; decadeSel.appendChild(o); });
   decadeSel.value = opts.some(o => o[0] === prev) ? prev : "Any";
