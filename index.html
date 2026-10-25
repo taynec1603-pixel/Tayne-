@@ -165,7 +165,7 @@ button:focus-visible, select:focus-visible, a:focus-visible { outline: 3px solid
       <select id="genre"></select>
     </div>
     <div>
-      <label class="label" for="decade">Released in</label>
+      <label class="label" for="decade">Released from</label>
       <select id="decade"></select>
     </div>
     <button type="button" class="spin" id="spin">🎬 Pick something for me</button>
@@ -474,18 +474,15 @@ function load(k) { try { return localStorage.getItem(k); } catch (e) { return nu
 
 function pool() {
   const g = genreSel.value, d = decadeSel.value;
-  return DATA[kind].filter(t => t.rating > 7 && (g === "Any" || t.genres.includes(g)) && (d === "Any" || decadeOf(t.year) === d));
+  return DATA[kind].filter(t => t.rating > 7 && (g === "Any" || t.genres.includes(g)) && (d === "Any" || t.year >= Number(d)));
 }
 
-// Pre-1970 titles share one bucket so it isn't nearly empty
-function decadeOf(y) { return y < 1970 ? "old" : String(Math.floor(y / 10) * 10); }
-
+// Every year from the newest title back to the oldest, for this type
 function fillDecades() {
-  const prev = decadeSel.value || load("tmg-decade") || "Any";
-  const have = new Set(DATA[kind].filter(t => t.rating > 7).map(t => decadeOf(t.year)));
+  const prev = decadeSel.value || load("tmg-from") || "Any";
+  const years = DATA[kind].filter(t => t.rating > 7).map(t => t.year);
   const opts = [["Any", "Any year"]];
-  ["2020", "2010", "2000", "1990", "1980", "1970"].forEach(d => { if (have.has(d)) opts.push([d, d + "s"]); });
-  if (have.has("old")) opts.push(["old", "Before 1970"]);
+  for (let y = Math.max(...years); y >= Math.min(...years); y--) opts.push([String(y), `${y} onwards`]);
   decadeSel.innerHTML = "";
   opts.forEach(([v, label]) => { const o = document.createElement("option"); o.value = v; o.textContent = label; decadeSel.appendChild(o); });
   decadeSel.value = opts.some(o => o[0] === prev) ? prev : "Any";
@@ -557,7 +554,7 @@ function setKind(k) {
 
 document.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => setKind(b.dataset.kind)));
 genreSel.addEventListener("change", () => { store("tmg-genre", genreSel.value); updatePool(); spin(); });
-decadeSel.addEventListener("change", () => { store("tmg-decade", decadeSel.value); updatePool(); spin(); });
+decadeSel.addEventListener("change", () => { store("tmg-from", decadeSel.value); updatePool(); spin(); });
 $("spin").addEventListener("click", spin);
 
 setKind(load("tmg-kind") === "series" ? "series" : "movie");
